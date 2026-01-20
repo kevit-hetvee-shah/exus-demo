@@ -1,0 +1,27 @@
+# Core ETL Tool Dependencies
+# These are the essential packages required for the configuration-driven ETL tool
+
+# Orchestration and DAG Generation
+apache-airflow>=2.0.0
+dag-factory>=0.19.0
+
+# Data Processing
+pandas>=1.3.0
+numpy>=1.20.0
+
+# Configuration
+PyYAML>=5.4.0
+
+# Database
+SQLAlchemy>=1.4.0
+
+# Additional utilities
+python-dateutil>=2.8.0
+
+# Note: When installing apache-airflow, many additional dependencies
+# will be installed automatically. The above represents the minimum
+# required packages for the ETL tool functionality.
+
+# For a full development environment with all Airflow providers,
+# you may also want to install:
+# apache-airflow-providers-standard

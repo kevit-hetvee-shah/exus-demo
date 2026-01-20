@@ -1,0 +1,17 @@
+# Phone Aggregation
+# Extracts unique phone number combinations per customer
+
+aggregation:
+  name: phone
+  description: "Unique phone numbers per customer"
+  version: "1.0"
+
+source:
+  name: source_file_a
+  type: source_file
+
+group_by:
+  - CustomerId
+  - Phonenumber
+
+aggregated_columns: []  # No aggregations - deduplication only

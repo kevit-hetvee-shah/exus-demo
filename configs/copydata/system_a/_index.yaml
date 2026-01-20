@@ -1,0 +1,8 @@
+# System A CopyData Tasks Index
+# Registry of all copydata tasks for System A
+
+tasks:
+  - products
+  - customers
+  - addresses
+  - phones

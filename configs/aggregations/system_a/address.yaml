@@ -1,0 +1,17 @@
+# Address Aggregation
+# Extracts unique address combinations per customer
+
+aggregation:
+  name: address
+  description: "Unique addresses per customer"
+  version: "1.0"
+
+source:
+  name: source_file_a
+  type: source_file
+
+group_by:
+  - CustomerId
+  - Address
+
+aggregated_columns: []  # No aggregations - deduplication only

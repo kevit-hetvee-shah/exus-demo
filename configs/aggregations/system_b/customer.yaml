@@ -1,0 +1,21 @@
+# Customer Aggregation
+# Aggregates customer data to get one unique customer record
+
+aggregation:
+  name: customer
+  description: "Aggregated customer data - one record per customer"
+  version: "1.0"
+
+source:
+  name: source_file_b
+  type: source_file
+
+group_by:
+  - CustomerId
+
+aggregated_columns:
+  - name: CustomerName
+    function: first
+
+  - name: CustomerVAT
+    function: first

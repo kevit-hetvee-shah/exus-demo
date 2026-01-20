@@ -1,0 +1,9 @@
+RecordId,CustomerId,CustomerName,CustomerVAT,ProductCode,ProductName,Address,Phonenumber
+1,1001,John Doe,JD123,PA01,ProductA1,123 Main St,555-0100
+2,1002,Jane Smith,JS456,PA02,ProductA2,456 Elm St,555-0123
+3,1001,John Doe,JD123,PA03,ProductA3,123 Main St,555-0100
+4,1003,Bob Jones,BJ789,PA04,ProductA4,789 Oak St,555-0145
+5,1004,Alice Brown,AB101,PA05,ProductA5,321 Pine St,555-0167
+6,1006,Mili Brown,AN101,PA06,ProductA6,391 Pine St,555-0167
+7,1007,Andy Brown,PQ102,PA07,ProductA7,392 Pine St,555-0167
+8,1008,Ray Brown,AS308,PA08,ProductA8,390 Pine St,555-0167

@@ -1,0 +1,90 @@
+# Source File A Configuration
+# System A main source file containing product and customer data
+
+source:
+  name: source_file_a
+  description: "Source file from SystemA containing product and customer data"
+  version: "1.0"
+
+file_config:
+  path: "/home/kevit/PycharmProjects/QP/EXUS/test-airflow-dag-factoory/data/system_A/incoming/source_file_A.csv"
+  format: delimited
+  delimiter: ","
+  quote_char: '"'
+  encoding: utf-8
+  has_header: true
+  skip_rows: 0
+  comment_char: null
+  line_ending: unix  # unix (\n), windows (\r\n), mac (\r)
+
+  # File validation
+  filename_pattern: "source_file_A.csv"
+  bad_records_threshold: 100
+  empty_file_behavior: error  # error, continue, skip
+
+columns:
+  - name: RecordId
+    source_name: RecordId
+    data_type: string
+    nullable: false
+    transformations:
+      - type: trim
+      - type: cast
+        target_type: integer
+
+  - name: CustomerId
+    source_name: CustomerId
+    data_type: integer
+    nullable: false
+    transformations:
+      - type: trim
+
+  - name: CustomerName
+    source_name: CustomerName
+    data_type: string
+    nullable: true
+    transformations:
+      - type: trim
+      - type: upper_case
+
+  - name: CustomerVAT
+    source_name: CustomerVAT
+    data_type: string
+    nullable: true
+    transformations:
+      - type: trim
+
+  - name: ProductCode
+    source_name: ProductCode
+    data_type: string
+    nullable: true
+    transformations:
+      - type: trim
+
+  - name: ProductName
+    source_name: ProductName
+    data_type: string
+    nullable: true
+    transformations:
+      - type: trim
+
+  - name: Address
+    source_name: Address
+    data_type: string
+    nullable: true
+    transformations:
+      - type: trim
+
+  - name: Phonenumber
+    source_name: Phonenumber
+    data_type: string
+    nullable: true
+    transformations:
+      - type: trim
+      - type: remove_non_printable
+
+row_filters:
+  - column: RecordId
+    operator: not_null
+  - column: CustomerId
+    operator: not_null

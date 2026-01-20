@@ -1,0 +1,65 @@
+# System B ETL Job - dag-factory v1.0 format
+# All tasks for System B defined in one place
+
+default:
+  default_args:
+    owner: "data_engineering_team"
+    start_date: 2026-01-19
+    retries: 1
+
+system_b_etl:
+  schedule: "*/2 * * * *"
+  catchup: false
+  description: "System B ETL Pipeline - Extracts data from SourceFileB, transforms it, and loads Product, Customer, Address, and Phone data into systemB.db"
+  tags: [etl, system_b]
+  tasks:
+    - task_id: wait_for_source_file
+      operator: airflow.providers.standard.sensors.filesystem.FileSensor
+      filepath: "/home/kevit/PycharmProjects/QP/EXUS/test-airflow-dag-factoory/data/system_B/incoming/source_file_B.csv"
+      poke_interval: 60
+      timeout: 3600
+      mode: "reschedule"
+
+    - task_id: copydata_products
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      python_callable: etl.workflows.execute_copy_data_task
+      op_kwargs:
+        system: "b"
+        source: "source_file_b"
+        source_type: "source_file"
+        destination_table: "Product"
+        copydata_task: "products"
+      dependencies: [wait_for_source_file]
+
+    - task_id: copydata_customers
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      python_callable: etl.workflows.execute_copy_data_task
+      op_kwargs:
+        system: "b"
+        source: "customer"
+        source_type: "aggregated_dataset"
+        destination_table: "Customer"
+        copydata_task: "customers"
+      dependencies: [wait_for_source_file]
+
+    - task_id: copydata_addresses
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      python_callable: etl.workflows.execute_copy_data_task
+      op_kwargs:
+        system: "b"
+        source: "address"
+        source_type: "aggregated_dataset"
+        destination_table: "Address"
+        copydata_task: "addresses"
+      dependencies: [wait_for_source_file]
+
+    - task_id: copydata_phones
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      python_callable: etl.workflows.execute_copy_data_task
+      op_kwargs:
+        system: "b"
+        source: "phone"
+        source_type: "aggregated_dataset"
+        destination_table: "Phone"
+        copydata_task: "phones"
+      dependencies: [wait_for_source_file]

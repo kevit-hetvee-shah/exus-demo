@@ -1,0 +1,24 @@
+# Customer Table Schema
+table:
+  name: Customer
+  description: "Customer master data"
+
+columns:
+  - name: CustomerId
+    type: INTEGER
+    primary_key: true
+    nullable: false
+    autoincrement: false
+
+  - name: CustomerVAT
+    type: TEXT
+    nullable: true
+
+  - name: CustomerName
+    type: TEXT
+    nullable: true
+
+indexes:
+  - name: idx_customer_vat
+    columns: [CustomerVAT]
+    unique: false

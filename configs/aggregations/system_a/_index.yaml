@@ -1,0 +1,7 @@
+# System A Aggregations Index
+# Registry of all aggregations for System A
+
+aggregations:
+  - customer
+  - address
+  - phone

@@ -1,0 +1,34 @@
+# CopyData: Customers
+# Copy aggregated customer data to Customer table
+
+task:
+  name: customers
+  description: "Copy aggregated customer data to Customer table"
+  version: "1.0"
+
+source:
+  name: customer
+  type: aggregated_dataset
+
+destination:
+  table: Customer
+  database: systemB.db
+
+record_join:
+  source_columns: [CustomerId]
+  destination_columns: [CustomerId]
+
+copy_mode: insert_update
+
+column_mappings:
+  - source: CustomerId
+    destination: CustomerId
+    empty_source_behavior: update
+
+  - source: CustomerVAT
+    destination: CustomerVAT
+    empty_source_behavior: keep
+
+  - source: CustomerName
+    destination: CustomerName
+    empty_source_behavior: keep

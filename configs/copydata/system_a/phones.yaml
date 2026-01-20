@@ -1,0 +1,30 @@
+# CopyData: Phones
+# Copy aggregated phone data to Phone table
+
+task:
+  name: phones
+  description: "Copy aggregated phone data to Phone table"
+  version: "1.0"
+
+source:
+  name: phone
+  type: aggregated_dataset
+
+destination:
+  table: Phone
+  database: systemA.db
+
+record_join:
+  source_columns: [CustomerId, Phonenumber]
+  destination_columns: [CustomerId, PhoneNumber]
+
+copy_mode: insert_only
+
+column_mappings:
+  - source: CustomerId
+    destination: CustomerId
+    empty_source_behavior: update
+
+  - source: Phonenumber
+    destination: PhoneNumber
+    empty_source_behavior: update

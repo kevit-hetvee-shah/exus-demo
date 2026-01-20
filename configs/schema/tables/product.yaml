@@ -1,0 +1,27 @@
+# Product Table Schema
+table:
+  name: Product
+  description: "Product information linked to customers"
+
+columns:
+  - name: ProductId
+    type: INTEGER
+    primary_key: true
+    nullable: false
+    autoincrement: false
+
+  - name: CustomerId
+    type: INTEGER
+    nullable: false
+    foreign_key:
+      table: Customer
+      column: CustomerId
+
+  - name: ProductName
+    type: TEXT
+    nullable: true
+
+indexes:
+  - name: idx_product_customer
+    columns: [CustomerId]
+    unique: false

@@ -1,0 +1,34 @@
+# System B Products CopyData Task
+# This is system-specific because it loads directly from source file with RecordId
+
+task:
+  name: products
+  description: "Copy product data from source file to Product table"
+  version: "1.0"
+
+source:
+  name: source_file_b
+  type: source_file
+
+destination:
+  table: Product
+  database: systemB.db
+
+record_join:
+  source_columns: [RecordId]
+  destination_columns: [ProductId]
+
+copy_mode: insert_update
+
+column_mappings:
+  - source: RecordId
+    destination: ProductId
+    empty_source_behavior: update
+
+  - source: CustomerId
+    destination: CustomerId
+    empty_source_behavior: update
+
+  - source: ProductName
+    destination: ProductName
+    empty_source_behavior: keep

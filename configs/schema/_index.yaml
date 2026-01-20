@@ -1,0 +1,8 @@
+# Database Schema Index
+# Registry of all database tables
+
+tables:
+  - customer
+  - product
+  - address
+  - phone

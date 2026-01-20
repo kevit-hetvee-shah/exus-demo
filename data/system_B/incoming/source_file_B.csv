@@ -1,0 +1,5 @@
+RecordId,CustomerId,CustomerName,CustomerVAT,ProductCode,ProductName,Address,Phonenumber
+1,2001,Charlie Wilson,CW234,PB01,ProductB1,"555 Maple Ave","555-0200"
+2,2002,Diana Martinez,DM567,PB02,ProductB2,"777 Cedar Ln","555-0223"
+3,2001,Charlie Wilson,CW234,PB03,ProductB3,"555 Maple Ave","555-0200"
+4,2003,Eve Davis,ED890,PB04,ProductB4,"999 Birch Blvd","555-0245"

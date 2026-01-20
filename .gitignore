@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment variables
+.env
+
+# Databases (optional - comment out if you want to track schema)
+*.db
+*.sqlite
+*.sqlite3
+
+# Old sample files
+data/sample_files/
+
+# OS
+.DS_Store
+Thumbs.db
