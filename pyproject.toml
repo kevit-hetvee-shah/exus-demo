@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "etl-platform"
+version = "1.0.0"
+description = "Declarative ETL Platform for Kubernetes"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    {name = "ETL Team"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.11",
+]
+
+[tool.setuptools.packages.find]
+include = ["etl*", "cli*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

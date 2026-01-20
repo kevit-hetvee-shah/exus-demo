@@ -1,0 +1,88 @@
+# ============================================================================
+# WAIT FOR SOURCE FILE - Configuration
+# ============================================================================
+#
+# Purpose: Monitor for new file arrival from a source system
+#
+# Use Case: Wait for System A to drop a source file in the incoming folder,
+#           then trigger downstream processing
+#
+# Returns: File metadata (path, size, modified time) to downstream functions
+#
+# A FileSensor will detect when a new file is created in the file system
+# (or object storage), making a push-based trigger mechanism.
+#
+# ============================================================================
+
+function:
+  type: wait_for_source_file
+  name: wait_for_source_file_a
+  version: "1.0"
+  description: "Wait for System A source file arrival"
+
+# ---------------------------------------------------------------------------
+# STORAGE CONFIGURATION
+# ---------------------------------------------------------------------------
+# Where to look for files: S3, Local File System, SFTP
+# ---------------------------------------------------------------------------
+storage:
+  # For local storage
+  path: "/data/incoming/system_a"
+
+  # For S3 storage (if type: s3)
+  # bucket: "my-bucket"
+  # prefix: "incoming/system_a/"
+
+  # For SFTP storage (if type: sftp)
+  # host: "sftp.example.com"
+  # port: 22
+  # directory: "/incoming/system_a"
+
+# ---------------------------------------------------------------------------
+# FILE PATTERN
+# ---------------------------------------------------------------------------
+# Which files to look for
+# ---------------------------------------------------------------------------
+filepath_pattern: "source_file_A_*.csv"
+# Examples:
+#   "*.csv"           - Any CSV file
+#   "data_*.csv"      - Files starting with "data_"
+#   "*.csv.gz"        - Gzipped CSV files
+#   "file_{date}.csv" - Date-based pattern (requires date_config)
+
+# ---------------------------------------------------------------------------
+# MONITORING CONFIGURATION
+# ---------------------------------------------------------------------------
+# How often to check and when to timeout
+# ---------------------------------------------------------------------------
+monitoring:
+  # How often to check (in seconds)
+  poke_interval: 60
+
+  # Maximum wait time (in seconds)
+  # Set to null for infinite wait
+  timeout: 3600
+
+  # What to do on timeout: fail, continue
+  timeout_behavior: "fail"
+
+# ---------------------------------------------------------------------------
+# DATE PATTERN (Optional)
+# ---------------------------------------------------------------------------
+# For files with date stamps in filename
+# ---------------------------------------------------------------------------
+# date_pattern:
+#   enabled: false
+#   regex: "source_file_A_(\\d{8})\\.csv"
+#   date_format: "%Y%m%d"
+#   use_latest: true
+
+# ---------------------------------------------------------------------------
+# OUTPUT
+# ---------------------------------------------------------------------------
+# Returns file metadata to downstream functions
+# ---------------------------------------------------------------------------
+# output:
+#   file_path: "/data/incoming/system_a/source_file_A_20240120.csv"
+#   file_size: 1024000
+#   modified_time: "2024-01-20T10:30:00Z"

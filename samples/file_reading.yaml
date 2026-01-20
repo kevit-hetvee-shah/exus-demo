@@ -1,0 +1,168 @@
+# ============================================================================
+# FILE READING - Configuration
+# ============================================================================
+#
+# Purpose: Read files with extensive parsing options
+#
+# Use Case: Read a CSV file with specific format, apply row-level filters,
+#           output to Parquet for processing
+#
+# Returns: A parquet file (row filtering only, no column transformations)
+#
+# Operations:
+#   1. Apply filename regex filter before download
+#   2. Download files
+#   3. Open file for reading without loading entire contents into memory
+#   4. Apply row-level filters
+#   5. Track & handle bad records
+#   6. Handle empty file
+#   7. Write parsed output to Parquet file (cache for next stage)
+#
+# Once the Parquet output is written, the worker pod terminates and frees memory
+#
+# ============================================================================
+
+function:
+  type: read_data
+  name: read_products_a
+  version: "1.0"
+  description: "Read product data from System A source file - filtering only"
+
+# ---------------------------------------------------------------------------
+# INPUT
+# ---------------------------------------------------------------------------
+# The file path from where the data would be read
+# ---------------------------------------------------------------------------
+input_file_path: "/data/incoming/system_a/source_file_A.csv"
+
+
+# ---------------------------------------------------------------------------
+# FILE FORMAT OPTIONS
+# ---------------------------------------------------------------------------
+# Delimiter, quote character, encoding, header, skip rows
+# ---------------------------------------------------------------------------
+format:
+  # Field delimiter: comma, pipe, semicolon, tab
+  delimiter: ","
+
+  # Character used to enclose values
+  quote_char: '"'
+
+  # Escape character for embedded quotes
+  escape_char: "\\"
+
+  # File encoding: ansi, utf-8, utf-8-sig, utf-16, utf-16-le, utf-16-be
+  encoding: "utf-8"
+
+  # Does the file have a header row?
+  has_header: true
+
+  # Number of rows to skip before reading data
+  skip_rows: 0
+
+  # Skip blank rows?
+  skip_blank_rows: true
+
+  # Comment character (lines starting with this are ignored)
+  # Set to null to disable comment handling
+  comment_char: null
+
+  # Line ending type: unix (\n), windows (\r\n), mac (\r)
+  # Auto-detected if not specified
+  line_ending: "unix"
+
+# ---------------------------------------------------------------------------
+# COLUMNS TO READ
+# ---------------------------------------------------------------------------
+# Specify which columns to read. All other columns are ignored.
+# Note: Column transformations are done in process_data function.
+# ---------------------------------------------------------------------------
+columns:
+  - name: RecordId
+    source_name: "RecordId"
+    data_type: varchar  # Read as string, process_data will cast to integer
+
+  - name: CustomerId
+    source_name: "CustomerId"
+    data_type: varchar
+
+  - name: ProductName
+    source_name: "ProductName"
+    data_type: varchar
+
+  - name: Score
+    source_name: "Score"
+    data_type: varchar
+
+  - name: Status
+    source_name: "Status"
+    data_type: varchar
+
+  - name: CreatedDate
+    source_name: "CreatedDate"
+    data_type: varchar
+
+# ---------------------------------------------------------------------------
+# ROW-LEVEL FILTERS
+# ---------------------------------------------------------------------------
+# Filter rows based on column values. All filters are combined with AND logic.
+# ---------------------------------------------------------------------------
+row_filters:
+  # Only include rows where RecordId is not null
+  - column: RecordId
+    operator: not_null
+
+  # Only include rows where Score > 10
+  - column: Score
+    operator: greater_than
+    value: "10"
+
+  # Only include rows where Status is in specific list
+  - column: Status
+    operator: in
+    value: ["ACTIVE", "PENDING"]
+
+  # Exclude rows where RecordId equals "0"
+  - column: RecordId
+    operator: not_equals
+    value: "0"
+
+# Available operators:
+#   - not_null: Column is not null/empty
+#   - equals: Exact match (==)
+#   - not_equals: Not equal (!=)
+#   - greater_than: Greater than (>)
+#   - less_than: Less than (<)
+#   - greater_equal: Greater or equal (>=)
+#   - less_equal: Less or equal (<=)
+#   - in: Value is in list
+#   - not_in: Value is not in list
+#   - contains: String contains value
+#   - starts_with: String starts with value
+#   - ends_with: String ends with value
+#   - regex: Matches regex pattern
+
+# ---------------------------------------------------------------------------
+# ERROR HANDLING
+# ---------------------------------------------------------------------------
+# How to handle parsing errors and edge cases
+# ---------------------------------------------------------------------------
+error_handling:
+  # Maximum number of bad records before failing
+  bad_records_threshold: 100
+
+  # What to do with bad records: error, warn, ignore
+  bad_records_behavior: "error"
+
+  # What to do with empty files: error, continue, skip
+  empty_file_behavior: "error"
+
+  # Truncate lines that are too long?
+  truncate_long_lines: false
+
+# ---------------------------------------------------------------------------
+# OUTPUT
+# ---------------------------------------------------------------------------
+# Where to write the raw filtered data
+# ---------------------------------------------------------------------------
+output_file_path: "/shared/staging/raw/products_raw.parquet"

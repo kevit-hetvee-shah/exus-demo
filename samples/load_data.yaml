@@ -1,0 +1,211 @@
+# ============================================================================
+# LOAD DATA (Database Schema Integration) - Configuration
+# ============================================================================
+#
+# Purpose: Copy data from Parquet files into database tables with
+#          configurable merge strategies
+#
+# Use Case: Load processed Parquet data into database tables (INSERT new rows,
+#           UPDATE existing rows, handle conflicts)
+#
+# Returns: Data modification counts (rows_inserted, rows_updated, rows_deleted)
+#
+# Operations:
+#   1. Read the processed Parquet file
+#   2. Establish connection using target configuration
+#   3. Execute batch operations (insert, update, delete)
+#   4. Commit transaction
+#
+# ============================================================================
+
+function:
+  type: copy_data
+  name: copy_products_a
+  version: "1.0"
+  description: "Copy product data from Parquet to Product table"
+
+# ---------------------------------------------------------------------------
+# INPUT
+# ---------------------------------------------------------------------------
+# The file path to read data from
+# ---------------------------------------------------------------------------
+input:
+  file_path: "/shared/staging/processed/products_processed.parquet"
+
+  # Alternative: Use output from upstream function
+  # file_path_from: process_products_a
+
+# ---------------------------------------------------------------------------
+# TARGET
+# ---------------------------------------------------------------------------
+# Database connection and table information
+# ---------------------------------------------------------------------------
+target:
+  # Database name or connection string
+  database: "systemA.db"
+
+  # Table name
+  table: "Product"
+
+  # Schema (optional, for databases that support schemas)
+  schema: "public"
+
+  # Database type: sqlite, postgresql, mysql, snowflake, bigquery
+  type: "sqlite"
+
+  # Connection string (alternative to database name)
+  # connection_string: "postgresql://user:password@localhost:5432/mydb"
+
+# ---------------------------------------------------------------------------
+# COPY MODE
+# ---------------------------------------------------------------------------
+# How to handle existing data
+# ---------------------------------------------------------------------------
+copy_mode: insert_update  # Options: insert_only, update_only, insert_update, replace, append
+
+# Mode descriptions:
+#   - insert_only: Insert all rows, fail if key exists
+#   - update_only: Update existing rows only, skip new rows
+#   - insert_update: Insert new rows, update existing (upsert) - most common
+#   - replace: Delete all rows from table, then insert all rows
+#   - append: Insert rows, ignore duplicates (no error on key conflict)
+
+# ---------------------------------------------------------------------------
+# KEY COLUMNS
+# ---------------------------------------------------------------------------
+# Columns that define uniqueness for determining insert vs update
+# ---------------------------------------------------------------------------
+key_columns:
+  - ProductId
+
+# For composite keys, specify multiple columns:
+# key_columns:
+#   - CustomerId
+#   - ProductId
+
+# ---------------------------------------------------------------------------
+# COLUMN MAPPINGS
+# ---------------------------------------------------------------------------
+# Map Parquet columns to table columns
+# ---------------------------------------------------------------------------
+column_mappings:
+  - source: ProductId
+    destination: ProductId
+
+  - source: ProductName
+    destination: ProductName
+
+  - source: TotalScore
+    destination: Score
+
+  - source: Region
+    destination: Region
+
+  - source: CreatedDate
+    destination: CreatedDate
+
+  # You can also add columns with default values:
+  # - destination: CreatedAt
+  #   default_value: "CURRENT_TIMESTAMP"
+
+# ---------------------------------------------------------------------------
+# EMPTY SOURCE BEHAVIOR
+# ---------------------------------------------------------------------------
+# What to do if source Parquet file is empty
+# ---------------------------------------------------------------------------
+empty_source_behavior: skip  # Options: skip, delete_all, update_nulls, fail
+
+# Behavior descriptions:
+#   - skip: Do nothing, leave table unchanged (default, safest)
+#   - delete_all: Delete all rows from table (dangerous)
+#   - update_nulls: Set all columns to NULL (mark as stale)
+#   - fail: Raise error and stop workflow
+
+# ---------------------------------------------------------------------------
+# DELETE BEFORE LOAD (Optional)
+# ---------------------------------------------------------------------------
+# Delete rows matching criteria before loading new data
+# ---------------------------------------------------------------------------
+delete_before_load:
+  enabled: false
+
+  # WHERE clause for deletion
+  where: "last_updated < '2024-01-01'"
+
+  # Alternative: Delete all rows
+  # delete_all: true
+
+# ---------------------------------------------------------------------------
+# DELETE AFTER LOAD (Optional)
+# ---------------------------------------------------------------------------
+# Delete rows not in source after loading (removes stale data)
+# ---------------------------------------------------------------------------
+delete_after_load:
+  enabled: false
+
+  # Soft delete (set flag instead of removing)
+  soft_delete: false
+  soft_delete_column: is_deleted
+  soft_delete_value: true
+
+  # Hard delete (actually remove rows)
+  # hard_delete: true
+
+# ---------------------------------------------------------------------------
+# BATCH CONFIGURATION
+# ---------------------------------------------------------------------------
+# Control batch size for performance
+# ---------------------------------------------------------------------------
+batch:
+  # Number of rows to process per batch
+  batch_size: 1000
+
+  # Commit after each batch (if false, commits at end)
+  commit_per_batch: true
+
+# ---------------------------------------------------------------------------
+# ERROR HANDLING
+# ---------------------------------------------------------------------------
+# How to handle errors during loading
+# ---------------------------------------------------------------------------
+error_handling:
+  # What to do on constraint violation: error, skip, update
+  constraint_violation_behavior: "update"
+
+  # Maximum number of errors before failing
+  max_errors: 100
+
+  # Continue on error (if true, logs errors but continues)
+  continue_on_error: false
+
+# ---------------------------------------------------------------------------
+# VALIDATION (Optional)
+# ---------------------------------------------------------------------------
+# Validate data before loading
+# ---------------------------------------------------------------------------
+validation:
+  enabled: false
+
+  # Validate column count matches
+  validate_column_count: true
+
+  # Validate data types
+  validate_data_types: true
+
+  # Validate required columns are not null
+  validate_required_columns:
+    - ProductId
+    - ProductName
+
+# ---------------------------------------------------------------------------
+# OUTPUT
+# ---------------------------------------------------------------------------
+# Returns information about the operation
+# ---------------------------------------------------------------------------
+# output:
+#   rows_inserted: 100
+#   rows_updated: 50
+#   rows_deleted: 10
+#   rows_skipped: 5
+#   processing_time_ms: 1500
+#   status: success

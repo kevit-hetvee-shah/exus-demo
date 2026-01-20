@@ -1,0 +1,320 @@
+# ============================================================================
+# COLUMN TRANSFORMATION AND AGGREGATION - Configuration
+# ============================================================================
+#
+# Purpose: Apply column-level transformations and perform aggregations
+#          on Parquet data in a single operation
+#
+# Use Case: Read the raw Parquet file from read stage, apply column
+#           transformations (type casting, string operations), perform
+#           aggregations (GROUP BY, window functions), output to
+#           processed Parquet for loading
+#
+# Returns: A clean Parquet file with transformed columns and aggregated data
+#
+# Operations:
+#   1. Open the Parquet file (no full data load into memory)
+#   2. Apply Column Transformation (cast, trim, date format, etc.)
+#   3. Apply Aggregations if specified (GROUP BY, SUM, COUNT, etc.)
+#   4. Apply Window Functions if specified (running totals, LAG/LEAD, etc.)
+#   5. Write transformed and aggregated data to another Parquet file
+#
+# Once the Parquet output is written, the worker pod terminates and frees memory
+#
+# ============================================================================
+
+function:
+  type: process_data
+  name: process_products_a
+  version: "1.0"
+  description: "Apply transformations and aggregations to product data"
+
+# ---------------------------------------------------------------------------
+# INPUT
+# ---------------------------------------------------------------------------
+# The file path to read data from
+# ---------------------------------------------------------------------------
+input_file_path: "/shared/staging/raw/products_raw.parquet"
+
+  # Alternative: Use output from upstream function
+  # file_path_from: read_products_a
+
+# ---------------------------------------------------------------------------
+# OUTPUT
+# ---------------------------------------------------------------------------
+# The file path to save data
+# ---------------------------------------------------------------------------
+output_file_path: "/shared/staging/processed/products_processed.parquet"
+
+
+# ---------------------------------------------------------------------------
+# COLUMN TRANSFORMATIONS
+# ---------------------------------------------------------------------------
+# Apply column-level operations (row-by-row, no grouping)
+# ---------------------------------------------------------------------------
+transformations:
+  # ===========================================================================
+  # TYPE CASTING
+  # ===========================================================================
+  # Convert data types from string to proper types
+  - input_column: RecordId
+    output_column: ProductId
+    type: cast
+    target_type: integer
+
+  - input_column: Score
+    output_column: Score
+    type: cast
+    target_type: decimal
+
+  # ===========================================================================
+  # STRING OPERATIONS (Chained)
+  # ===========================================================================
+  # Multiple transformations can be applied to same column
+  - input_column: ProductName
+    transformations:
+      - type: trim
+      - type: upper_case
+      - type: default_value
+        value: "Unknown Product"
+
+  - input_column: Region
+    transformations:
+      - type: trim
+      - type: upper_case
+
+  # ===========================================================================
+  # DATE FORMAT
+  # ===========================================================================
+  # Parse and reformat dates
+  - input_column: CreatedDate
+    output_column: CreatedDate
+    type: date_format
+    input_format: "%Y%m%d"      # Input: "20240120"
+    output_format: "%Y-%m-%d"    # Output: "2024-01-20"
+
+  # ===========================================================================
+  # STRING CONCAT
+  # ===========================================================================
+  # Combine multiple columns
+  - input_columns: [FirstName, LastName]
+    output_column: FullName
+    type: concat
+    separator: " "
+
+  # ===========================================================================
+  # SUBSTRING
+  # ===========================================================================
+  # Extract portion of string
+  - input_column: ProductCode
+    output_column: ProductCategory
+    type: substring
+    start: 0
+    length: 3
+
+  # ===========================================================================
+  # REGEX REPLACE
+  # ===========================================================================
+  # Replace patterns using regex
+  - input_column: PhoneNumber
+    output_column: PhoneNumber
+    type: regex
+    pattern: "[^0-9]"
+    replacement: ""
+
+  # ===========================================================================
+  # COALESCE
+  # ===========================================================================
+  # First non-null value
+  - input_columns: [Email, AlternateEmail, "unknown@example.com"]
+    output_column: PrimaryEmail
+    type: coalesce
+
+# Available transformation types:
+#   - cast: Convert data type (integer, decimal, varchar, date, boolean)
+#   - trim: Remove leading/trailing whitespace
+#   - upper_case: Convert to uppercase
+#   - lower_case: Convert to lowercase
+#   - substring: Extract portion of string
+#   - regex: Replace using regex pattern
+#   - default_value: Set default for null/empty values
+#   - concat: Combine multiple columns
+#   - date_format: Parse and reformat dates
+#   - coalesce: First non-null value across columns
+
+# ---------------------------------------------------------------------------
+# AGGREGATIONS (Optional)
+# ---------------------------------------------------------------------------
+# Perform GROUP BY aggregations (reduces number of rows)
+# ---------------------------------------------------------------------------
+aggregations:
+  # ===========================================================================
+  # AGGREGATION GROUP 1: Customer Summary
+  # ===========================================================================
+  - group_by: [CustomerId, Region]
+    operations:
+      # Sum of scores
+      - column: Score
+        type: sum
+        output_column: TotalScore
+
+      # Count of products
+      - column: ProductId
+        type: count
+        output_column: ProductCount
+
+      # Average score
+      - column: Score
+        type: avg
+        output_column: AverageScore
+
+      # Minimum date
+      - column: CreatedDate
+        type: min
+        output_column: FirstPurchaseDate
+
+      # Maximum date
+      - column: CreatedDate
+        type: max
+        output_column: LastPurchaseDate
+
+      # List of product IDs
+      - column: ProductId
+        type: list
+        output_column: ProductList
+
+      # First status in group
+      - column: Status
+        type: first
+        output_column: FirstStatus
+
+    # Filter groups (HAVING clause)
+    having:
+      - column: TotalScore
+        operator: greater_than
+        value: 100
+
+  # ===========================================================================
+  # AGGREGATION GROUP 2: Daily Summary
+  # ===========================================================================
+  - group_by: [CreatedDate]
+    operations:
+      - column: ProductId
+        type: count
+        output_column: DailyProductCount
+
+      - column: Score
+        type: sum
+        output_column: DailyTotalScore
+
+# Available aggregation types:
+#   - sum: Sum of values
+#   - count: Count of records
+#   - avg: Average value
+#   - min: Minimum value
+#   - max: Maximum value
+#   - first: First value in group
+#   - last: Last value in group
+#   - list: Collect values into array
+
+# Available having operators:
+#   - equals, not_equals, greater_than, less_than, greater_equal, less_equal
+
+# ---------------------------------------------------------------------------
+# WINDOW FUNCTIONS (Optional)
+# ---------------------------------------------------------------------------
+# Perform calculations across related rows (keeps all rows)
+# ---------------------------------------------------------------------------
+window_functions:
+  # ===========================================================================
+  # RUNNING TOTAL
+  # ===========================================================================
+  - name: running_total_score
+    partition_by: [CustomerId]
+    order_by: [CreatedDate]
+    function:
+      type: running_total
+      column: Score
+      output_column: RunningTotalScore
+
+  # ===========================================================================
+  # ROW NUMBER (Ranking)
+  # ===========================================================================
+  - name: rank_by_score
+    partition_by: [Region]
+    order_by: [Score, DESC]
+    function:
+      type: row_number
+      output_column: ScoreRank
+
+  # ===========================================================================
+  # LAG - Compare with previous row
+  # ===========================================================================
+  - name: previous_score
+    partition_by: [CustomerId]
+    order_by: [CreatedDate]
+    function:
+      type: lag
+      column: Score
+      offset: 1
+      output_column: PreviousScore
+
+  # ===========================================================================
+  # LEAD - Compare with next row
+  # ===========================================================================
+  - name: next_score
+    partition_by: [CustomerId]
+    order_by: [CreatedDate]
+    function:
+      type: lead
+      column: Score
+      offset: 1
+      output_column: NextScore
+
+  # ===========================================================================
+  # MOVING AVERAGE
+  # ===========================================================================
+  - name: moving_avg_score
+    partition_by: [CustomerId]
+    order_by: [CreatedDate]
+    function:
+      type: moving_avg
+      column: Score
+      window_size: 3
+      output_column: MovingAvgScore
+
+  # ===========================================================================
+  # DENSE RANK
+  # ===========================================================================
+  - name: dense_rank
+    partition_by: [Region]
+    order_by: [Score, DESC]
+    function:
+      type: dense_rank
+      output_column: DenseRank
+
+# Available window function types:
+#   - running_total: Cumulative sum
+#   - row_number: Sequential row number (1, 2, 3...)
+#   - rank: Competition ranking with gaps (1, 2, 2, 4...)
+#   - dense_rank: Competition ranking without gaps (1, 2, 2, 3...)
+#   - lag: Value from previous row
+#   - lead: Value from next row
+#   - moving_avg: Rolling average
+#   - first_value: First value in window
+#   - last_value: Last value in window
+
+# ---------------------------------------------------------------------------
+# ERROR HANDLING
+# ---------------------------------------------------------------------------
+# How to handle transformation errors
+# ---------------------------------------------------------------------------
+error_handling:
+  # What to do on transformation failure: error, warn, ignore, set_null
+  transformation_failure_behavior: "error"
+
+  # What to do on cast failure: error, warn, ignore, set_null
+  cast_failure_behavior: "warn"
+
+  # What to do on aggregation overflow: error, warn, ignore
+  overflow_behavior: "error"
